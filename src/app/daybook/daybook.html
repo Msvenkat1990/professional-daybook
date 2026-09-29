@@ -1,0 +1,640 @@
+<div class="daybook-page">
+  <!-- =========================================
+       PAGE HEADER
+  ========================================== -->
+
+  <div class="page-header">
+    <div class="page-title">
+      <div class="title-icon">₹</div>
+
+      <div>
+        <h1>Daybook</h1>
+
+        <p>Daily transaction and accounting register</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn btn-secondary" (click)="resetFilters()">
+        Reset Filters
+      </button>
+
+      <button type="button" class="btn btn-primary" (click)="openEntryForm()">+ New Entry</button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       SUMMARY CARDS
+  ========================================== -->
+
+  <div class="summary-grid">
+    <!-- OPENING -->
+
+    <div class="summary-card opening">
+      <div class="summary-card-header">
+        <span class="summary-label"> Opening Balance </span>
+
+        <span class="summary-icon"> OB </span>
+      </div>
+
+      <div class="summary-value">
+        {{ formatCurrency(openingBalance) }}
+      </div>
+
+      <div class="summary-footer">Balance brought forward</div>
+    </div>
+
+    <!-- DEBIT -->
+
+    <div class="summary-card debit">
+      <div class="summary-card-header">
+        <span class="summary-label"> Total Debit </span>
+
+        <span class="summary-icon"> DR </span>
+      </div>
+
+      <div class="summary-value">
+        {{ formatCurrency(totalDebit) }}
+      </div>
+
+      <div class="summary-footer">Total outgoing entries</div>
+    </div>
+
+    <!-- CREDIT -->
+
+    <div class="summary-card credit">
+      <div class="summary-card-header">
+        <span class="summary-label"> Total Credit </span>
+
+        <span class="summary-icon"> CR </span>
+      </div>
+
+      <div class="summary-value">
+        {{ formatCurrency(totalCredit) }}
+      </div>
+
+      <div class="summary-footer">Total incoming entries</div>
+    </div>
+
+    <!-- CLOSING -->
+
+    <div class="summary-card closing">
+      <div class="summary-card-header">
+        <span class="summary-label"> Closing Balance </span>
+
+        <span class="summary-icon"> CB </span>
+      </div>
+
+      <div class="summary-value">
+        {{ formatCurrency(closingBalance) }}
+      </div>
+
+      <div class="summary-footer">Current available balance</div>
+    </div>
+  </div>
+
+  <!-- =========================================
+       FILTER CARD
+  ========================================== -->
+
+  <div class="filter-card">
+    <div class="filter-header">
+      <div>
+        <h2>Daybook Filters</h2>
+
+        <p>Filter transactions by date, entry type and payment mode</p>
+      </div>
+
+      <div class="transaction-count">
+        {{ transactionCount }}
+        {{ transactionCount === 1 ? 'Transaction' : 'Transactions' }}
+      </div>
+    </div>
+
+    <div class="filter-grid">
+      <!-- DATE -->
+
+      <div class="filter-group">
+        <label> Date </label>
+
+        <input type="date" [(ngModel)]="selectedDate" />
+      </div>
+
+      <!-- ENTRY TYPE -->
+
+      <div class="filter-group">
+        <label> Entry Type </label>
+
+        <select [(ngModel)]="selectedEntryType">
+          <option value="All">All Types</option>
+
+          <option value="Receipt">Receipt</option>
+
+          <option value="Payment">Payment</option>
+
+          <option value="Contra">Contra</option>
+
+          <option value="Journal">Journal</option>
+        </select>
+      </div>
+
+      <!-- PAYMENT MODE -->
+
+      <div class="filter-group">
+        <label> Payment Mode </label>
+
+        <select [(ngModel)]="selectedPaymentMode">
+          <option value="All">All Modes</option>
+
+          <option value="Cash">Cash</option>
+
+          <option value="Bank">Bank</option>
+
+          <option value="UPI">UPI</option>
+
+          <option value="Card">Card</option>
+
+          <option value="Cheque">Cheque</option>
+        </select>
+      </div>
+
+      <!-- SEARCH -->
+
+      <div class="filter-group search-group">
+        <label> Search </label>
+
+        <div class="search-input">
+          <span class="search-icon"> 🔍 </span>
+
+          <input
+            type="text"
+            placeholder="Voucher, reference, particulars..."
+            [(ngModel)]="searchText"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================
+       TABLE CARD
+  ========================================== -->
+
+  <div class="table-card">
+    <div class="table-header">
+      <div>
+        <h2>Daybook Transactions</h2>
+
+        <p>Detailed daily accounting entries</p>
+      </div>
+
+      <div class="table-actions">
+        <button type="button" class="icon-button" title="Refresh" (click)="refreshEntries()">
+          ↻
+        </button>
+
+        <button type="button" class="btn btn-outline" (click)="exportPdf()">PDF</button>
+
+        <button type="button" class="btn btn-outline" (click)="exportExcel()">Excel</button>
+      </div>
+    </div>
+
+    <!-- =========================================
+         TABLE
+    ========================================== -->
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+
+            <th>Date & Time</th>
+
+            <th>Voucher No.</th>
+
+            <th>Entry Type</th>
+
+            <th>Particulars</th>
+
+            <th>Reference</th>
+
+            <th>Payment Mode</th>
+
+            <th class="amount-column">Debit</th>
+
+            <th class="amount-column">Credit</th>
+
+            <th>Narration</th>
+
+            <th class="action-column">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let entry of filteredEntries; let i = index">
+            <!-- SERIAL -->
+
+            <td class="serial-number">
+              {{ i + 1 }}
+            </td>
+
+            <!-- DATE -->
+
+            <td>
+              <div class="date-cell">
+                <strong>
+                  {{ entry.date }}
+                </strong>
+
+                <small>
+                  {{ entry.time }}
+                </small>
+              </div>
+            </td>
+
+            <!-- VOUCHER -->
+
+            <td>
+              <span class="voucher-number">
+                {{ entry.voucherNo }}
+              </span>
+            </td>
+
+            <!-- ENTRY TYPE -->
+
+            <td>
+              <span
+                class="entry-badge"
+                [ngClass]="{
+                  receipt: entry.type === 'Receipt',
+                  payment: entry.type === 'Payment',
+                  contra: entry.type === 'Contra',
+                  journal: entry.type === 'Journal',
+                }"
+              >
+                {{ entry.type }}
+              </span>
+            </td>
+
+            <!-- PARTICULARS -->
+
+            <td>
+              <div class="particulars-cell">
+                <strong>
+                  {{ entry.particulars }}
+                </strong>
+              </div>
+            </td>
+
+            <!-- REFERENCE -->
+
+            <td>
+              <span class="reference-number">
+                {{ entry.reference || '—' }}
+              </span>
+            </td>
+
+            <!-- PAYMENT MODE -->
+
+            <td>
+              <span class="payment-mode">
+                {{ entry.paymentMode }}
+              </span>
+            </td>
+
+            <!-- DEBIT -->
+
+            <td class="amount-column debit-amount">
+              <span *ngIf="entry.debit > 0">
+                {{ formatCurrency(entry.debit) }}
+              </span>
+
+              <span class="empty-amount" *ngIf="entry.debit === 0"> — </span>
+            </td>
+
+            <!-- CREDIT -->
+
+            <td class="amount-column credit-amount">
+              <span *ngIf="entry.credit > 0">
+                {{ formatCurrency(entry.credit) }}
+              </span>
+
+              <span class="empty-amount" *ngIf="entry.credit === 0"> — </span>
+            </td>
+
+            <!-- NARRATION -->
+
+            <td>
+              <span class="narration">
+                {{ entry.narration || '—' }}
+              </span>
+            </td>
+
+            <!-- ACTION -->
+
+            <td class="action-column">
+              <div class="row-actions">
+                <button
+                  type="button"
+                  class="action-btn edit-btn"
+                  title="Edit Entry"
+                  (click)="editEntry(entry)"
+                >
+                  ✎
+                </button>
+
+                <button
+                  type="button"
+                  class="action-btn delete-btn"
+                  title="Delete Entry"
+                  (click)="$event.stopPropagation(); deleteEntry(entry.id)"
+                >
+                  🗑
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- NO DATA -->
+
+          <tr *ngIf="filteredEntries.length === 0">
+            <td colspan="11" class="no-data">
+              <div class="no-data-content">
+                <div class="no-data-icon">—</div>
+
+                <h3>No transactions found</h3>
+
+                <p>Try changing the filters or search criteria.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+
+        <!-- TOTAL -->
+
+        <tfoot>
+          <tr>
+            <td colspan="7" class="total-label">Daily Totals</td>
+
+            <td class="amount-column total-debit">
+              {{ formatCurrency(totalDebit) }}
+            </td>
+
+            <td class="amount-column total-credit">
+              {{ formatCurrency(totalCredit) }}
+            </td>
+
+            <td></td>
+
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- =========================================
+         TABLE FOOTER
+    ========================================== -->
+
+    <div class="table-footer">
+      <div>
+        Showing
+
+        <strong>
+          {{ transactionCount }}
+        </strong>
+
+        transactions
+      </div>
+
+      <div class="footer-balance">
+        <span> Closing Balance: </span>
+
+        <strong>
+          {{ formatCurrency(closingBalance) }}
+        </strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================
+     ENTRY MODAL
+========================================= -->
+
+<div class="entry-modal-backdrop" *ngIf="showEntryForm" (click)="onBackdropClick($event)">
+  <div class="entry-modal" (click)="$event.stopPropagation()">
+    <!-- MODAL HEADER -->
+
+    <div class="entry-modal-header">
+      <div>
+        <h2>
+          {{ isEditMode ? 'Edit' : 'New' }}
+          {{ newEntryType }} Entry
+        </h2>
+
+        <p>
+          {{ isEditMode ? 'Update the accounting voucher' : 'Create a new accounting voucher' }}
+        </p>
+      </div>
+
+      <button type="button" class="modal-close" (click)="closeEntryForm()">×</button>
+    </div>
+
+    <!-- =========================================
+         FORM
+    ========================================== -->
+
+    <div class="entry-form">
+      <!-- ENTRY TYPE -->
+
+      <div class="form-group">
+        <label>
+          Entry Type
+          <span>*</span>
+        </label>
+
+        <select [(ngModel)]="newEntryType" class="form-control">
+          <option value="Receipt">Receipt</option>
+
+          <option value="Payment">Payment</option>
+
+          <option value="Contra">Contra</option>
+
+          <option value="Journal">Journal</option>
+        </select>
+      </div>
+
+      <!-- PAYMENT MODE -->
+
+      <div class="form-group">
+        <label>
+          Payment Mode
+          <span>*</span>
+        </label>
+
+        <select [(ngModel)]="newEntry.paymentMode" class="form-control">
+          <option value="Cash">Cash</option>
+
+          <option value="Bank">Bank</option>
+
+          <option value="UPI">UPI</option>
+
+          <option value="Card">Card</option>
+
+          <option value="Cheque">Cheque</option>
+        </select>
+      </div>
+
+      <!-- DATE -->
+
+      <div class="form-group">
+        <label>
+          Date
+          <span>*</span>
+        </label>
+
+        <input type="date" [(ngModel)]="newEntry.date" class="form-control" />
+      </div>
+
+      <!-- TIME -->
+
+      <div class="form-group">
+        <label> Time </label>
+
+        <input type="time" [(ngModel)]="newEntry.time" class="form-control" />
+      </div>
+
+      <!-- ACCOUNT SECTION -->
+
+      <div class="form-section-title form-group-full">Accounting Details</div>
+
+      <!-- DEBIT ACCOUNT -->
+
+      <div class="form-group">
+        <label> Debit Account </label>
+
+        <select [(ngModel)]="newEntry.debitAccount" class="form-control">
+          <option value="">Select Debit Account</option>
+
+          <option *ngFor="let account of getDebitAccounts()" [value]="account">
+            {{ account }}
+          </option>
+        </select>
+      </div>
+
+      <!-- CREDIT ACCOUNT -->
+
+      <div class="form-group">
+        <label> Credit Account </label>
+
+        <select [(ngModel)]="newEntry.creditAccount" class="form-control">
+          <option value="">Select Credit Account</option>
+
+          <option *ngFor="let account of getCreditAccounts()" [value]="account">
+            {{ account }}
+          </option>
+        </select>
+      </div>
+
+      <!-- PARTICULARS -->
+
+      <div class="form-group form-group-full">
+        <label>
+          Particulars
+          <span>*</span>
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="newEntry.particulars"
+          class="form-control"
+          placeholder="Enter transaction particulars"
+        />
+      </div>
+
+      <!-- REFERENCE -->
+
+      <div class="form-group">
+        <label> Reference </label>
+
+        <input
+          type="text"
+          [(ngModel)]="newEntry.reference"
+          class="form-control"
+          placeholder="Invoice / Bill / Reference No."
+        />
+      </div>
+
+      <!-- AMOUNT -->
+
+      <div class="form-group">
+        <label>
+          Amount
+          <span>*</span>
+        </label>
+
+        <input
+          type="number"
+          [(ngModel)]="newEntry.amount"
+          class="form-control amount-input"
+          placeholder="0.00"
+          min="0"
+          step="0.01"
+        />
+      </div>
+
+      <!-- NARRATION -->
+
+      <div class="form-group form-group-full">
+        <label> Narration </label>
+
+        <textarea
+          [(ngModel)]="newEntry.narration"
+          class="form-control"
+          rows="3"
+          placeholder="Enter transaction narration"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- =========================================
+         MODAL FOOTER
+    ========================================== -->
+
+    <div class="entry-modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeEntryForm()">Cancel</button>
+
+      <button type="button" class="btn btn-primary" (click)="saveEntry()">
+        {{ isEditMode ? 'Update Entry' : 'Save Entry' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================
+     DELETE CONFIRMATION MODAL
+========================================= -->
+
+<div class="delete-modal-backdrop" *ngIf="showDeleteConfirm">
+  <div class="delete-modal">
+    <div class="delete-modal-icon">🗑</div>
+
+    <h2>Delete Entry?</h2>
+
+    <p>
+      Are you sure you want to delete
+      <strong>{{ deleteVoucherNo }}</strong
+      >?
+    </p>
+
+    <p class="delete-warning">This action cannot be undone.</p>
+
+    <div class="delete-modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+
+      <button type="button" class="btn btn-danger" (click)="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
